@@ -15,6 +15,9 @@ function at(dayOffset, hour, minute = 0) {
 async function main() {
   await prisma.booking.deleteMany();
   await prisma.room.deleteMany();
+  // ให้ id เริ่มที่ 1 ใหม่ทุกครั้ง ตัวอย่างใน requests.http จะได้ใช้ id 1, 2, 3, ... ได้เลย
+  await prisma.$executeRawUnsafe("ALTER TABLE Booking AUTO_INCREMENT = 1");
+  await prisma.$executeRawUnsafe("ALTER TABLE Room AUTO_INCREMENT = 1");
 
   const rooms = {};
   for (const room of [
