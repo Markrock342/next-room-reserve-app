@@ -1,0 +1,39 @@
+// ฐานข้อมูล room_reserve_db — ระบบห้องประชุมและการจอง
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// ห้องประชุม
+model Room {
+  id        Int       @id @default(autoincrement())
+  roomCode  String    @unique @db.VarChar(50) // รหัสห้อง ห้ามว่างและห้ามซ้ำ
+  roomName  String    @db.VarChar(191) // ชื่อห้อง ห้ามว่าง
+  capacity  Int // จำนวนที่นั่ง จำนวนเต็มมากกว่า 0
+  location  String    @db.VarChar(191) // สถานที่ตั้ง
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[] // ห้องหนึ่งมีการจองได้หลายรายการ
+}
+
+/// การจอง
+model Booking {
+  id            Int      @id @default(autoincrement())
+  bookerName    String   @db.VarChar(191) // ชื่อผู้จอง ห้ามว่าง
+  purpose       String   @db.VarChar(500) // วัตถุประสงค์การใช้งาน
+  startTime     DateTime // วันเวลาเริ่มใช้ห้อง
+  endTime       DateTime // วันเวลาสิ้นสุด
+  attendeeCount Int // จำนวนผู้เข้าร่วม จำนวนเต็มมากกว่า 0
+  roomId        Int // อ้างอิงห้องประชุม (การจองหนึ่งรายการต้องระบุห้องเดียว)
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([roomId, startTime])
+  @@index([startTime])
+}

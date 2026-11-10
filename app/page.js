@@ -1,69 +1,61 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+
+const ROOM_APIS = [
+  ["POST", "/api/rooms", "เพิ่มห้อง"],
+  ["GET", "/api/rooms?search=&minCapacity=", "รายการห้อง ค้นหาชื่อ/สถานที่ กรองความจุขั้นต่ำ"],
+  ["GET", "/api/rooms/[id]", "รายละเอียดห้อง"],
+  ["PATCH", "/api/rooms/[id]", "แก้ไขบางฟิลด์"],
+  ["DELETE", "/api/rooms/[id]", "ลบห้องที่ไม่มีการจอง"],
+  ["GET", "/api/rooms/[id]/bookings?from=&to=", "การจองของห้อง"],
+  ["GET", "/api/rooms/available?startTime=&endTime=&attendeeCount=", "ค้นหาห้องว่าง"],
+];
+
+const BOOKING_APIS = [
+  ["POST", "/api/bookings", "เพิ่มการจอง"],
+  ["GET", "/api/bookings?search=&roomId=&from=&to=&status=&page=&limit=", "รายการจอง ค้นหา กรอง แบ่งหน้า"],
+  ["GET", "/api/bookings/[id]", "รายละเอียดการจอง"],
+  ["PATCH", "/api/bookings/[id]", "แก้ไข ย้ายห้อง เปลี่ยนเวลา"],
+  ["DELETE", "/api/bookings/[id]", "ยกเลิกการจองที่ยังไม่เริ่ม"],
+  ["GET", "/api/bookings/upcoming?days=&roomId=", "การจองที่จะถึงใน days วัน"],
+  ["GET", "/api/bookings/stats?from=&to=&roomId=", "สรุปจำนวนการจองและชั่วโมงแยกตามห้อง"],
+  ["DELETE", "/api/bookings/expired?roomId=&before=", "ลบประวัติการจองที่สิ้นสุดก่อน before"],
+];
+
+function ApiTable({ rows, start }) {
+  return (
+    <table>
+      <tbody>
+        {rows.map(([method, path, note], i) => (
+          <tr key={path + method}>
+            <td>{start + i}.</td>
+            <td>
+              <span className={`method ${method}`}>{method}</span> <code>{path}</code>
+              <br />
+              {note}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.js</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main>
+      <h1>next-room-reserve-app</h1>
+      <p className="sub">ระบบห้องประชุมและการจอง · Next.js + Prisma + MySQL · 15 API</p>
+      <section>
+        <h2>API ห้องประชุม</h2>
+        <ApiTable rows={ROOM_APIS} start={1} />
+      </section>
+      <section>
+        <h2>API การจอง</h2>
+        <ApiTable rows={BOOKING_APIS} start={8} />
+      </section>
+      <p className="sub">
+        ลองเรียกได้เลย เช่น <Link href="/api/rooms" prefetch={false}>/api/rooms</Link> หรือใช้ไฟล์ <code>requests.http</code> ในโปรเจกต์
+      </p>
+    </main>
   );
 }

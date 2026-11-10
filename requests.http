@@ -1,0 +1,132 @@
+### ตัวอย่างเรียก API ทั้ง 15 ตัว
+### ใช้กับส่วนขยาย "REST Client" ใน VS Code (กด Send Request เหนือแต่ละคำขอ)
+### รัน npx prisma migrate dev (ใส่ข้อมูลตัวอย่างให้) และ npm run dev ก่อน
+### เวลาในตัวอย่างเป็นเวลาไทย (+07:00) ปรับวันที่ให้เป็นอนาคตก่อนลอง
+
+@base = http://localhost:3000
+@roomId = 1
+@bookingId = 4
+
+
+############################## ห้องประชุม ##############################
+
+### 1. เพิ่มห้อง
+POST {{base}}/api/rooms
+Content-Type: application/json
+
+{
+  "roomCode": "R401",
+  "roomName": "ห้องประชุม 401",
+  "capacity": 15,
+  "location": "อาคาร D ชั้น 4"
+}
+
+### 1. เพิ่มห้อง — รหัสซ้ำ → 409
+POST {{base}}/api/rooms
+Content-Type: application/json
+
+{ "roomCode": "R101", "roomName": "ซ้ำ", "capacity": 5, "location": "x" }
+
+### 1. เพิ่มห้อง — ความจุไม่ถูกต้อง → 400
+POST {{base}}/api/rooms
+Content-Type: application/json
+
+{ "roomCode": "R999", "roomName": "ห้องทดสอบ", "capacity": 0, "location": "x" }
+
+### 2. รายการห้องทั้งหมด
+GET {{base}}/api/rooms
+
+### 2. ค้นหาชื่อห้องหรือสถานที่ + ความจุขั้นต่ำ
+GET {{base}}/api/rooms?search=อาคาร A&minCapacity=10
+
+### 3. รายละเอียดห้อง
+GET {{base}}/api/rooms/{{roomId}}
+
+### 3. ไม่พบห้อง → 404
+GET {{base}}/api/rooms/99999
+
+### 4. แก้ไขบางฟิลด์
+PATCH {{base}}/api/rooms/{{roomId}}
+Content-Type: application/json
+
+{ "roomName": "ห้องประชุมเล็ก 101 (ปรับปรุงใหม่)", "capacity": 8 }
+
+### 4. ลดความจุต่ำกว่าการจองที่ยังไม่จบ → 409
+PATCH {{base}}/api/rooms/{{roomId}}
+Content-Type: application/json
+
+{ "capacity": 1 }
+
+### 5. ลบห้อง (ห้องที่มีการจอง → 409)
+DELETE {{base}}/api/rooms/{{roomId}}
+
+### 6. การจองของห้อง
+GET {{base}}/api/rooms/{{roomId}}/bookings
+
+### 6. การจองของห้องที่ทับซ้อนกับช่วงเวลา
+GET {{base}}/api/rooms/2/bookings?from=2026-12-01T00:00:00%2B07:00&to=2026-12-31T23:59:59%2B07:00
+
+### 7. ค้นหาห้องว่าง
+GET {{base}}/api/rooms/available?startTime=2026-12-15T09:00:00%2B07:00&endTime=2026-12-15T12:00:00%2B07:00&attendeeCount=10
+
+
+############################## การจอง ##############################
+
+### 8. เพิ่มการจอง
+POST {{base}}/api/bookings
+Content-Type: application/json
+
+{
+  "roomId": 2,
+  "bookerName": "สมหญิง ใจงาม",
+  "purpose": "ประชุมสรุปงานปลายปี",
+  "startTime": "2026-12-20T09:00:00+07:00",
+  "endTime": "2026-12-20T11:00:00+07:00",
+  "attendeeCount": 8
+}
+
+### 8. จองทับเวลาเดิม → 409
+POST {{base}}/api/bookings
+Content-Type: application/json
+
+{
+  "roomId": 2,
+  "bookerName": "อีกคน",
+  "purpose": "ทับเวลา",
+  "startTime": "2026-12-20T10:00:00+07:00",
+  "endTime": "2026-12-20T12:00:00+07:00",
+  "attendeeCount": 4
+}
+
+### 9. รายการจอง (หน้าแรก 10 รายการ)
+GET {{base}}/api/bookings
+
+### 9. ค้นหา + กรอง + แบ่งหน้า
+GET {{base}}/api/bookings?search=สมชาย&status=upcoming&page=1&limit=5
+
+### 9. กรองตามห้องและช่วงเวลาเริ่ม
+GET {{base}}/api/bookings?roomId=2&from=2026-11-01T00:00:00%2B07:00&to=2027-01-01T00:00:00%2B07:00
+
+### 10. รายละเอียดการจอง
+GET {{base}}/api/bookings/{{bookingId}}
+
+### 11. แก้ไขการจอง (ย้ายห้อง/เปลี่ยนเวลา)
+PATCH {{base}}/api/bookings/{{bookingId}}
+Content-Type: application/json
+
+{ "roomId": 3, "attendeeCount": 6 }
+
+### 12. ยกเลิกการจอง (เริ่มไปแล้ว → 409)
+DELETE {{base}}/api/bookings/{{bookingId}}
+
+### 13. การจองที่จะถึงภายใน 7 วัน
+GET {{base}}/api/bookings/upcoming
+
+### 13. ภายใน 14 วัน เฉพาะห้อง 2
+GET {{base}}/api/bookings/upcoming?days=14&roomId=2
+
+### 14. สรุปการจองแยกตามห้อง
+GET {{base}}/api/bookings/stats?from=2026-11-01T00:00:00%2B07:00&to=2026-12-01T00:00:00%2B07:00
+
+### 15. ลบประวัติการจองที่สิ้นสุดก่อน before
+DELETE {{base}}/api/bookings/expired?roomId=1&before=2026-11-09T00:00:00%2B07:00
